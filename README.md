@@ -1,9 +1,9 @@
-# ECE209AS_F2022
+# ECE209AS - Computational Robotics Fall 2022
 
-Git repository for all of the scripts used to solve the challenge problems
+Git repository for all of my scripts used to solve the weekly challenge problems
 
+## Gridworld:
 
-Gridworld:
 ![Screenshot](Screenshot.png)
 
-Numberline:
+## Numberline:
