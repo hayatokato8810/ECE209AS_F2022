@@ -13,7 +13,7 @@ class Value:
 		fig, ax = plt.subplots(1,1)
 		for (j,i),label in np.ndenumerate(values):
 		    ax.text(i,j,label,ha='center',va='center')
-		im = ax.imshow(values, origin = 'lower')
+		im = ax.imshow(values, cmap="RdBu", origin = 'lower')
 		ax.set_xticks(np.arange(-.5, self.X_dim, 1), minor=True)
 		ax.set_yticks(np.arange(-.5, self.Y_dim, 1), minor=True)
 		ax.grid(which='minor', color='k', linestyle='-', linewidth=1)

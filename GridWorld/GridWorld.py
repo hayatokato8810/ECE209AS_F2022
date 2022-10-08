@@ -6,6 +6,7 @@ __author__ = "Hayato Kato"
 
 from copy import copy
 import numpy as np
+import matplotlib.pyplot as plt
 
 def isAlwaysTrue(matrix,s):
 	return True
@@ -38,7 +39,7 @@ class GridWorld:
 		self.S = convert2Set(worldmap, isAlwaysTrue)
 		self.A = ['up','down','left','right','center']
 
-		self.S_obs  = convert2Set(worldmap, isObstacle)
+		self.S_obs = convert2Set(worldmap, isObstacle)
 		self.S_W = convert2Set(worldmap,isRoad)
 		self.S_D = convert2Set(worldmap, isIcecreamShop_D)
 		self.S_S = convert2Set(worldmap, isIcecreamShop_S)
@@ -46,7 +47,7 @@ class GridWorld:
 		self.output = 0
 		self.map = worldmap
 
-		self.p_e = 0.2
+		self.p_e = 0.4
 
 		self.x_dim, self.y_dim = self.map.shape
 
@@ -54,28 +55,30 @@ class GridWorld:
 	def update(self, action):
 		print('Update the state')
 
-	# NOT FINISHED
+	# Returns the transition probability given a transition triplet
 	def pr(self, state, action, next_state):
 		probability = 0
-		# Next state is adjacent to current state
-		if next_state not in self.S_obs:
+		# States must not be occupied by obstacle and they must be adjacent
+		if next_state not in self.S_obs and state not in self.S_obs and next_state in self.S_adj(state):
+			# If desired action succeeded
 			if next_state == self.f(state, action):
-				if next_state in self.getAdjacentStates(state):
-					print("Case 1")
+				# If the state changes
+				if state == next_state:
 					probability = 1
 				else:
-					print("Case 2")
 					probability = 1 - self.p_e
+			# If desired action failed
 			else:
-				if next_state in self.getAdjacentStates(state):
-					print("Case 3")
+				# If the state changes
+				if state == next_state:
 					probability = 1
-					for s in range(self.getAdjacentStates(state)):
-						probability = probability - self.pr(state, action, s)
+					# Subtract the probability of all surrounding states
+					for s in self.S_adj(state):
+						if s != state:
+							probability -= self.pr(state, action, s)
 				else:
-					print("Case 4")
-					probability = self.p_e/4.0
-
+					if action != "center":
+						probability = self.p_e/4.0
 		return probability
 
 	def f(self, state, action):
@@ -83,26 +86,55 @@ class GridWorld:
 		if action == self.A[0]: 
 			if state[1] != self.y_dim-1:
 				desired_state[1] = desired_state[1] + 1
+			else:
+				return None
 		elif action == self.A[1]: 
 			if state[1] != 0:
 				desired_state[1] = desired_state[1] - 1
+			else:
+				return None
 		elif action == self.A[2]:
 			if state[0] != 0:
 				desired_state[0] = desired_state[0] - 1
+			else:
+				return None
 		elif action == self.A[3]:
 			if state[0] != self.x_dim-1:
 				desired_state[0] = desired_state[0] + 1
+			else:
+				return None
 		elif action == self.A[4]:
 			pass
+		else:
+			print("Not a valid action")
+			exit()
 		return desired_state
 
-	def getAdjacentStates(self, state):
+	def S_adj(self, state):
 		space = []
 		for action in self.A:
 			new_state = self.f(state,action)
-			if new_state != state:
+			if new_state != None:
 				space.append(new_state)
 		return space
+
+	def displayAllProbability(self, state, action):
+		probabilities = np.zeros((self.x_dim,self.y_dim))
+		for x in range(self.x_dim):
+			for y in range(self.y_dim):
+				probabilities[x,y] = self.pr(state,action,[x,y])
+		probabilities = probabilities.transpose()
+
+		fig, ax = plt.subplots(1,1)
+		for (j,i),label in np.ndenumerate(probabilities):
+		    ax.text(i,j,round(label,2),ha='center',va='center')
+		im = ax.imshow(probabilities, origin = 'lower')
+		ax.set_xticks(np.arange(-.5, self.x_dim, 1), minor=True)
+		ax.set_yticks(np.arange(-.5, self.y_dim, 1), minor=True)
+		ax.grid(which='minor', color='k', linestyle='-', linewidth=1)
+		ax.set_title('s_t=['+str(state[0])+','+str(state[1])+'], a=' + action + ', p_e=' + str(self.p_e))
+		plt.colorbar(im)
+		plt.show()
 
 	# Draws an ASCII art of the current grid world
 	def draw(self, state):
@@ -148,17 +180,19 @@ def main():
 	grid_map[4,3] = 4
 	grid_map[4,4] = 4
 	
-	starting_state = [1,2]
+	starting_state = [0,2]
 	state = starting_state
 
 	world = GridWorld(grid_map)
-	world.draw(state)
 
-	result = world.pr([1,1],"up",[1,2])
-	print(result)
+	world.draw([2,2])
+	#result = world.f([0,2],"left")
+	#result = round(world.pr([2,2],"left",[3,2]),2)
+	#print(result)
 
-	result = world.getAdjacentStates(state)
-	print(result)
+	#result = world.S_adj([0,0])
+	world.displayAllProbability([0,2],'up')
+	#print(result)
 
 
 if __name__ == '__main__':
