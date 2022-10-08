@@ -81,6 +81,7 @@ class GridWorld:
 						probability = self.p_e/4.0
 		return probability
 
+	# State Dynamics Function (Desired State Function)
 	def f(self, state, action):
 		desired_state = copy(state)
 		if action == self.A[0]: 
@@ -110,6 +111,7 @@ class GridWorld:
 			exit()
 		return desired_state
 
+	# Computes all adjacent states
 	def S_adj(self, state):
 		space = []
 		for action in self.A:
@@ -185,15 +187,8 @@ def main():
 
 	world = GridWorld(grid_map)
 
-	world.draw([2,2])
-	#result = world.f([0,2],"left")
-	#result = round(world.pr([2,2],"left",[3,2]),2)
-	#print(result)
-
-	#result = world.S_adj([0,0])
-	world.displayAllProbability([0,2],'up')
-	#print(result)
-
+	world.draw(state)
+	world.displayAllProbability(state,'up')
 
 if __name__ == '__main__':
 	main()
