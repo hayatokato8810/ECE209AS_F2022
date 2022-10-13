@@ -38,14 +38,21 @@ def convert2Set(matrix,indicatorFunc):
 class GridWorld:
 	# Takes the initial state and the map of obstacles represented using a numpy array
 	def __init__(self, worldmap):
+		# State Space
 		self.S = convert2Set(worldmap, isAlwaysTrue)
+		# Action Space
 		self.A = ['up','down','left','right','center']
 
+		# Obstacle Space
 		self.S_obs = convert2Set(worldmap, isObstacle)
+		# Road Space
 		self.S_W = convert2Set(worldmap,isRoad)
+		# Icecream Shop D Space
 		self.S_D = convert2Set(worldmap, isIcecreamShop_D)
+		# Icecream Shop S Space
 		self.S_S = convert2Set(worldmap, isIcecreamShop_S)
 
+		# Reward
 		self.R_D = 1
 		self.R_S = 10
 		self.R_W = -1
@@ -53,11 +60,14 @@ class GridWorld:
 		self.output = 0
 		self.map = worldmap
 
+		# Constants
 		self.p_e = 0.4
 		self.gamma = 0.8
+		self.converge_threshold = 0.00001
 
 		self.x_dim, self.y_dim = self.map.shape
 
+		# Optimal Value
 		self.V_star = np.zeros((self.x_dim, self.y_dim))
 
 	# Updates the current state to the next state (to be implemented)
@@ -95,22 +105,22 @@ class GridWorld:
 		desired_state = copy(state)
 		if action == self.A[0]: 
 			if state[1] != self.y_dim-1:
-				desired_state[1] = desired_state[1] + 1
+				desired_state[1] += 1
 			else:
 				return None
 		elif action == self.A[1]: 
 			if state[1] != 0:
-				desired_state[1] = desired_state[1] - 1
+				desired_state[1] -= 1
 			else:
 				return None
 		elif action == self.A[2]:
 			if state[0] != 0:
-				desired_state[0] = desired_state[0] - 1
+				desired_state[0] -= 1
 			else:
 				return None
 		elif action == self.A[3]:
 			if state[0] != self.x_dim-1:
-				desired_state[0] = desired_state[0] + 1
+				desired_state[0] += 1
 			else:
 				return None
 		elif action == self.A[4]:
@@ -143,8 +153,10 @@ class GridWorld:
 					reward = self.R_W
 		return reward
 
-	def V_iterate(self, plot = False):
-		new_V = copy(self.V_star)
+
+	def compute_V_star(self, plot = False):
+		new_V = np.zeros((self.x_dim, self.y_dim))
+		diff = []
 		k = 0
 		while True:
 			for s in self.S:
@@ -156,15 +168,16 @@ class GridWorld:
 					if max_V < summation:
 						max_V = summation
 				new_V[s[0],s[1]] = max_V
-			diff = np.linalg.norm(self.V_star - new_V)
-			print(diff)
-			if diff < 0.00001:
+			temp = np.linalg.norm(self.V_star - new_V)
+			diff.append(temp)
+			print(temp)
+			if temp < self.converge_threshold:
 				break
 			self.V_star = copy(new_V)
 			if plot:
 				fig,ax = self.plot(self.V_star, k)
 			k += 1
-		return k
+		return k, diff
 
 	def plot(self, V, iteration, blocking = False):
 		values = V.transpose()
@@ -192,25 +205,26 @@ class GridWorld:
 		return space
 
 	# Visualizes transition probabilities across all possible next states given a current state and action
-	def displayAllProbability(self, state, action):
+	def compute_P(self, state, action, plot=False):
 		probabilities = np.zeros((self.x_dim,self.y_dim))
 		for x in range(self.x_dim):
 			for y in range(self.y_dim):
 				probabilities[x,y] = self.pr(state,action,[x,y])
-		probabilities = probabilities.transpose()
-		fig, ax = plt.subplots(1,1)
-		for (j,i),label in np.ndenumerate(probabilities):
-		    ax.text(i,j,round(label,2),ha='center',va='center')
-		im = ax.imshow(probabilities, origin = 'lower')
-		ax.set_xticks(np.arange(-.5, self.x_dim, 1), minor=True)
-		ax.set_yticks(np.arange(-.5, self.y_dim, 1), minor=True)
-		ax.grid(which='minor', color='k', linestyle='-', linewidth=1)
-		ax.set_title('s_t=['+str(state[0])+','+str(state[1])+'], a=' + action + ', p_e=' + str(self.p_e))
-		plt.colorbar(im)
-		plt.show()
+		if plot:
+			probabilities = probabilities.transpose()
+			fig, ax = plt.subplots(1,1)
+			for (j,i),label in np.ndenumerate(probabilities):
+			    ax.text(i,j,round(label,2),ha='center',va='center')
+			im = ax.imshow(probabilities, origin = 'lower')
+			ax.set_xticks(np.arange(-.5, self.x_dim, 1), minor=True)
+			ax.set_yticks(np.arange(-.5, self.y_dim, 1), minor=True)
+			ax.grid(which='minor', color='k', linestyle='-', linewidth=1)
+			ax.set_title('s_t=['+str(state[0])+','+str(state[1])+'], a=' + action + ', p_e=' + str(self.p_e))
+			plt.colorbar(im)
+			plt.show()
 
 	# Draws an ASCII art of the current grid world
-	def draw(self, state):
+	def draw_ASCII(self, state):
 		print('  ┌'+'─'*(2*self.x_dim+1)+'┐')
 		for j in range(self.y_dim-1,-1,-1):
 			line = str(j) + ' │ '
@@ -257,17 +271,18 @@ def main():
 	# Initial State
 	starting_state = [2,2]
 
+	# Initialize Gridworld class
 	world = GridWorld(grid_map)
 
 	# ASCII Visualization of particular state
-	world.draw(starting_state)
+	world.draw_ASCII(starting_state)
 
 	# Displays all transition probabilities for a given state and action pair
-	world.displayAllProbability(state,'right')
+	world.compute_P(starting_state,'right',plot=True)
 
 	# Runs Value Iteration and finds the optimal value function
-	converge_k = world.V_iterate(plot=True)
-	print(converge_k)
+	converge_k, d = world.compute_V_star(plot=False)
+	#print(converge_k)
 	world.plot(world.V_star, converge_k, blocking=True)
 
 if __name__ == '__main__':
