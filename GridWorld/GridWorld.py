@@ -274,6 +274,8 @@ def main():
 	# Initialize Gridworld class
 	world = GridWorld(grid_map)
 
+	print(world.S)
+
 	# ASCII Visualization of particular state
 	world.draw_ASCII(starting_state)
 
