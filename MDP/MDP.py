@@ -17,25 +17,34 @@ class MDP(object):
 		self.H = H
 		self.gamma = g
 
-		self.V = np.zeros(len(S))
+		N_S = len(self.S)
+		N_A = len(self.A)
+		self.V = np.zeros(N_S)
+		self.Pi = np.zeros(N_S)
+		self.Q = np.zeros((N_S,N_A))
 		self.threshold = 0.00001
 
+	# Value Iteration
 	def valueIteration(self):
 		N_S = len(self.S)
 		N_A = len(self.A)
-		new_V = copy(self.V)
+		self.V = np.zeros(N_S)
+		self.Q = np.zeros((N_S,N_A))
+		new_V = np.zeros(N_S)
 		diff = []
 		k = 0
+		# Iterate until convergence
 		while True:
+			# Iterate through all transitions
 			for s in range(N_S):
 				max_V = 0
 				for a in range(N_A):
-					summation = 0
+					q_val = 0
 					for s_ in range(N_S):
-						summation += self.P[s,a,s_]*(self.R[s,a,s_]+self.gamma*self.V[s_])
-					if max_V < summation:
-						max_V = summation
-				new_V[s] = max_V
+						# Compute the max value
+						q_val += self.P[s,a,s_]*(self.R[s,a,s_]+self.gamma*self.V[s_])
+					self.Q[s,a] = q_val
+				new_V = np.amax(self.Q, axis=-1)
 			temp = np.linalg.norm(self.V - new_V)
 			diff.append(temp)
 			if temp < self.threshold:
@@ -43,6 +52,35 @@ class MDP(object):
 			self.V = copy(new_V)
 			k += 1
 		return diff, k
+
+	# Policy Iteration
+	def policyIteration(self):
+		N_S = len(self.S)
+		N_A = len(self.A)
+		self.V = np.zeros(N_S)
+		self.Pi = np.zeros(N_S)
+		self.Q = np.zeros((N_S,N_A))
+		new_V = np.zeros(N_S)
+		diff = []
+		k = 0
+		# Iterate until convergence
+		while True:
+			for s in range(N_S):
+				a = int(self.Pi[s])
+				q_val = 0
+				for s_ in range(N_S):
+					# Compute both the max value and optimal policy
+					q_val += self.P[s,a,s_]*(self.R[s,a,s_]+self.gamma*self.V[s_])
+				self.Q[s,a] = q_val
+			self.Pi = np.argmax(self.Q,axis=-1)
+			new_V = np.amax(self.Q, axis=-1)
+			temp = np.linalg.norm(self.V - new_V)
+			diff.append(temp)
+			if temp < self.threshold:
+				break
+			self.V = copy(new_V)
+			k += 1
+		return diff,k
 
 def main():
 	print("starting MDP")

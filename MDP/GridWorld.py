@@ -58,32 +58,7 @@ class GridWorld(MDP.MDP):
 
 		super().__init__(self.S,self.A,self.P,self.R,self.H,self.g)
 
-	def drawState(self, state):
-		print('  ┌'+'─'*(2*self.x_dim+1)+'┐')
-		for j in range(self.y_dim-1,-1,-1):
-			line = str(j) + ' │ '
-			for i in range(self.x_dim):
-				if state != (i,j):
-					if (i,j) in self.S_obs:
-						line += 'X ' # Obstacle
-					elif (i,j) in self.S_road:
-						line += '# ' # Road
-					elif (i,j) in self.S_iceD:
-						line += 'D ' # Road
-					elif (i,j) in self.S_iceS:
-						line += 'S ' # Road
-					else:
-						line += '• ' # Empty Space
-				else:
-					line += '@ ' # Agent
-			line += '│'
-			print(line)
-		print('  └'+'─'*(2*self.x_dim+1)+'┘')
-		line = '    '
-		for j in range(self.x_dim):
-			line += str(j) + ' '
-		print(line)
-
+	# System Dynamics
 	def f(self, state, action):
 		desired_state = list(state)
 		if action == self.A[0]: 
@@ -113,6 +88,7 @@ class GridWorld(MDP.MDP):
 			exit()
 		return tuple(desired_state)
 
+	# Transition Probabilities
 	def pr(self, state, action, next_state):
 		probability = 0
 		# States must not be occupied by obstacle and they must be adjacent
@@ -145,12 +121,42 @@ class GridWorld(MDP.MDP):
 			if new_state != None:
 				space.append(new_state)
 		return space
-		
+	
+	''' Visualization Methods '''
+
+	# Draw ASCII art of current state
+	def drawState(self, state):
+		print('  ┌'+'─'*(2*self.x_dim+1)+'┐')
+		for j in range(self.y_dim-1,-1,-1):
+			line = str(j) + ' │ '
+			for i in range(self.x_dim):
+				if state != (i,j):
+					if (i,j) in self.S_obs:
+						line += 'X ' # Obstacle
+					elif (i,j) in self.S_road:
+						line += '# ' # Road
+					elif (i,j) in self.S_iceD:
+						line += 'D ' # Road
+					elif (i,j) in self.S_iceS:
+						line += 'S ' # Road
+					else:
+						line += '• ' # Empty Space
+				else:
+					line += '@ ' # Agent
+			line += '│'
+			print(line)
+		print('  └'+'─'*(2*self.x_dim+1)+'┘')
+		line = '    '
+		for j in range(self.x_dim):
+			line += str(j) + ' '
+		print(line)
+
+	# Plot all transition probabilities given particular state and action
 	def plotProbability(self, probabilities):
 		probabilities = probabilities.reshape(5,5).transpose()
 		fig, ax = plt.subplots(1,1)
 		for (j,i),label in np.ndenumerate(probabilities):
-		    ax.text(i,j,round(label,2),ha='center',va='center')
+		    ax.text(i,j,round(label,4),ha='center',va='center')
 		im = ax.imshow(probabilities, origin = 'lower')
 		ax.set_xticks(np.arange(-.5, self.x_dim, 1), minor=True)
 		ax.set_yticks(np.arange(-.5, self.y_dim, 1), minor=True)
@@ -158,11 +164,12 @@ class GridWorld(MDP.MDP):
 		plt.colorbar(im)
 		plt.show()
 
+	# Plot value function across all states
 	def plotValue(self):
 		matrix = self.V.reshape(5,5).transpose()
 		fig, ax = plt.subplots(1,1)
 		for (j,i),label in np.ndenumerate(matrix):
-		    ax.text(i,j,round(label,2),ha='center',va='center')
+		    ax.text(i,j,round(label,4),ha='center',va='center')
 		im = ax.imshow(matrix, cmap="RdBu", origin = 'lower')
 		ax.set_xticks(np.arange(-.5, self.x_dim, 1), minor=True)
 		ax.set_yticks(np.arange(-.5, self.y_dim, 1), minor=True)
@@ -192,7 +199,9 @@ def main():
 	world = GridWorld(grid_map,0.4)
 	world.plotProbability(world.P[17,0,:])
 
-	world.valueIteration()
+	#print(world.valueIteration())
+	print(world.policyIteration())
+	
 	world.plotValue()
 
 
