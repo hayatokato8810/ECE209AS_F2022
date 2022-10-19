@@ -13,16 +13,26 @@ class Graph(object):
         visited.append(start)
         queue.append(start)
         steps = 0
-
+        parent = {}
         while queue:
             steps += 1
             node = queue.pop(0)
-            for neighbor in E[node]:
+            for neighbor in self.E[node]:
                 if neighbor == end:
-                    return steps
+                    parent[neighbor] = node
+                    break
                 if neighbor not in visited:
+                    parent[neighbor] = node
                     visited.append(neighbor)
                     queue.append(neighbor)
+        
+        path = []
+        while(end != start):
+            path.append(end)
+            end = parent[end]
+        path.append(start)
+        path.reverse()
+        return path
 
 class Board(object):
     def __init__(self, piece):
@@ -62,5 +72,9 @@ def main():
     piece = ((1,2),(1,-2),(2,1),(2,-1),(-1,2),(-1,-2),(-2,1),(-2,-1))
     board = Board(piece)
     board.dump()
+    g = Graph(board.vertices,board.edges)  
+    path = g.bfs((0,0),(7,7))
+    print(path) 
+
     
 main()                
