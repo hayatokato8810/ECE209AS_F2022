@@ -35,7 +35,7 @@ class GridWorld(MDP.MDP):
 		self.p_e = p_e
 		self.R_D = 1
 		self.R_S = 10
-		self.R_W = -1
+		self.R_W = -100
 
 		# Action Space
 		self.A = ['up','down','left','right','center']
@@ -53,11 +53,11 @@ class GridWorld(MDP.MDP):
 		self.R = np.zeros((N_S,N_A,N_S))
 		for s in range(N_S):
 			if self.S[s] in self.S_iceD:
-				self.R[s,:,:] = 1
+				self.R[s,:,:] = self.R_D
 			elif self.S[s] in self.S_iceS:
-				self.R[s,:,:] = 10
+				self.R[s,:,:] = self.R_S
 			elif self.S[s] in self.S_road:
-				self.R[s,:,:] = -1
+				self.R[s,:,:] = self.R_W
 
 		# Horizon
 		self.H = 10 # Not currently used
