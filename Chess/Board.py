@@ -1,7 +1,4 @@
 #!/usr/bin/env python
-
-import numpy as np
-
 class Graph(object):
     def __init__(self, V, E):
         self.V = V
@@ -12,10 +9,8 @@ class Graph(object):
         visited = []
         visited.append(start)
         queue.append(start)
-        steps = 0
         parent = {}
         while queue:
-            steps += 1
             node = queue.pop(0)
             for neighbor in self.E[node]:
                 if neighbor == end:
@@ -73,10 +68,10 @@ class Board(object):
 def main():
     piece = ((1,2),(1,-2),(2,1),(2,-1),(-1,2),(-1,-2),(-2,1),(-2,-1))
     board = Board(piece)
-    board.dump()
+    #board.dump()
     g = Graph(board.vertices,board.edges)  
     path = g.bfs((4,4),(4,6))
     print(path) 
 
-    
-main()                
+if __name__ == '__main__':
+    main()                
