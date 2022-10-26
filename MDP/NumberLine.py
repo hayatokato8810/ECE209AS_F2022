@@ -41,6 +41,16 @@ class NumberLine(MDP.MDP):
 	def findDistance(self, p1, p2): #takes two 2D points
 		distance = np.sqrt((p2[0]-p1[0]**2) + (p2[1]-p1[1]**2))
 		return distance
+	
+	def find_closest(self, V, p1):
+		closest_vertex = ()
+		closest_distance = np.Inf
+		for vertex in V:
+			temp_distance = self.find_distance(vertex, p1)
+			if temp_distance < closest_distance:
+				closest_distance = temp_distance
+				closest_vertex = vertex
+		return closest_vertex
 
 	def prm(self):
 		while self.end_state not in self.V:
