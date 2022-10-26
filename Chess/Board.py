@@ -19,10 +19,12 @@ class Graph(object):
             node = queue.pop(0)
             for neighbor in self.E[node]:
                 if neighbor == end:
-                    parent[neighbor] = node
+                    if neighbor not in parent:
+                        parent[neighbor] = node
                     break
                 if neighbor not in visited:
-                    parent[neighbor] = node
+                    if neighbor not in parent:
+                        parent[neighbor] = node
                     visited.append(neighbor)
                     queue.append(neighbor)
         
@@ -73,7 +75,7 @@ def main():
     board = Board(piece)
     board.dump()
     g = Graph(board.vertices,board.edges)  
-    path = g.bfs((0,0),(7,7))
+    path = g.bfs((4,4),(4,6))
     print(path) 
 
     
