@@ -32,6 +32,10 @@ class NumberLine(MDP.MDP):
 		except:
 			return None
 
+	def findDistance(self, p1, p2): #takes two 2D points
+		distance = np.sqrt((p2[0]-p1[0]**2) + (p2[1]-p1[1]**2))
+		return distance
+
 
 
 
