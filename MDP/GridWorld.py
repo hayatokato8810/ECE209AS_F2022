@@ -12,12 +12,12 @@ import matplotlib.pyplot as plt
 
 class GridWorld(MDP.MDP):
 	def __init__(self, worldmap, p_e):
+		# State Space
 		self.S = []
 		self.x_dim, self.y_dim = worldmap.shape
 		for i in range(self.x_dim):
 			for j in range(self.y_dim):
 				self.S.append((i,j))
-
 		self.S_obs = []
 		self.S_iceD = []
 		self.S_iceS = []
@@ -35,9 +35,12 @@ class GridWorld(MDP.MDP):
 		self.p_e = p_e
 		self.R_D = 1
 		self.R_S = 10
-		self.R_W = -1
+		self.R_W = -100
 
+		# Action Space
 		self.A = ['up','down','left','right','center']
+
+		# Transition Probability
 		N_S = len(self.S)
 		N_A = len(self.A)
 		self.P = np.zeros((N_S,N_A,N_S))
@@ -45,15 +48,21 @@ class GridWorld(MDP.MDP):
 			for a in range(N_A):
 				for s_ in range(N_S):
 					self.P[s,a,s_] = self.pr(self.S[s],self.A[a],self.S[s_])
+
+		# Reward Function
 		self.R = np.zeros((N_S,N_A,N_S))
 		for s in range(N_S):
 			if self.S[s] in self.S_iceD:
-				self.R[s,:,:] = 1
+				self.R[s,:,:] = self.R_D
 			elif self.S[s] in self.S_iceS:
-				self.R[s,:,:] = 10
+				self.R[s,:,:] = self.R_S
 			elif self.S[s] in self.S_road:
-				self.R[s,:,:] = -1
-		self.H = 10
+				self.R[s,:,:] = self.R_W
+
+		# Horizon
+		self.H = 10 # Not currently used
+
+		# Discount Gamma
 		self.g = 0.8
 
 		super().__init__(self.S,self.A,self.P,self.R,self.H,self.g)
@@ -114,6 +123,7 @@ class GridWorld(MDP.MDP):
 						probability = self.p_e/4.0
 		return probability
 
+	# Computes set of all states reachable by a single action
 	def S_adj(self, state):
 		space = []
 		for action in self.A:
@@ -164,7 +174,7 @@ class GridWorld(MDP.MDP):
 		plt.colorbar(im)
 		plt.show()
 
-	# Plot value function across all states
+	# Plot optimal value function across all states
 	def plotValue(self):
 		matrix = self.V.reshape(5,5).transpose()
 		fig, ax = plt.subplots(1,1)
@@ -180,6 +190,7 @@ class GridWorld(MDP.MDP):
 def main():
 	print("start")
 
+	# Define Gridworld map via matrix representation
 	grid_map = np.zeros((5,5))
 	# Obstacles
 	grid_map[1,3] = 1
@@ -196,16 +207,18 @@ def main():
 	grid_map[4,3] = 4
 	grid_map[4,4] = 4
 
+	# Define GridWorld object
 	world = GridWorld(grid_map,0.4)
+	# Plot transition probabilities when starting from state #17 (x=3,y=2) & moving up
 	world.plotProbability(world.P[17,0,:])
 
-	#print(world.valueIteration())
-	print(world.policyIteration())
-	
+	# Value Iteration
+	print(world.valueIteration())
 	world.plotValue()
 
-
-
+	# Policy Iteration
+	print(world.policyIteration())
+	world.plotValue()
 
 if __name__ == '__main__':
 	main()
