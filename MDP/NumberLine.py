@@ -31,38 +31,62 @@ class NumberLine(MDP.MDP):
 			a = (v2-v1)*(v2+v1)/(2*(y2-y1)+(v2-v1))
 			t = (v2-v1)/a
 			if t >= 0:
-				return a,t
+				return True
 			else:
-				return None
+				return False
 			pass
 		except:
-			return None
+			return False
 
-	def findDistance(self, p1, p2): #takes two 2D points
-		distance = np.sqrt((p2[0]-p1[0]**2) + (p2[1]-p1[1]**2))
+	def find_distance(self, p1, p2): #takes two 2D points
+		distance = np.sqrt((p2[0]-p1[0])*(p2[0]-p1[0]) + (p2[1]-p1[1])*(p2[1]-p1[1]))
 		return distance
 	
 	def find_closest(self, p1):
-		closest_vertex = ()
-		closest_distance = np.Inf
-		for vertex in self.V:
-			temp_distance = self.find_distance(vertex, p1)
-			if temp_distance < closest_distance:
-				closest_distance = temp_distance
-				closest_vertex = vertex
-		return closest_vertex
+		closest_v = self.start_state
+		closest_d = self.find_distance(p1, closest_v)
+		for v in self.V:
+			temp_d = self.find_distance(v, p1)
+			if temp_d < closest_d:
+				closest_d = temp_d
+				closest_v = v
+		return closest_v
 
 	def prm(self):
 		while self.end_state not in self.V:
+		#for i in range(1000):
 			test_v = None
 			if random.random() > 0.9:
-				test_v = self.end_state
+				test_v = copy(self.end_state)
 			else:
 				test_v = (random.random()*self.x_dim, random.random()*self.y_dim)
+			print(test_v)
+
 			closest_v = self.find_closest(test_v)
+
 			if self.is_connected(test_v, closest_v):
+				print('connected')
 				self.V.append(test_v)
 				self.E.append((closest_v,test_v))
+
+				self.plotEdges(False)
+
+			#print(len(self.V))
+
+
+	def plotEdges(self, blockingStatus):
+		markerSize = 50
+		plt.close()
+		fig, ax = plt.subplots(1,1)
+		for start_point, end_point in self.E:
+			plt.plot([start_point[0],end_point[0]],[start_point[1],end_point[1]])
+		plt.scatter(self.start_state[0],self.start_state[1],markerSize,color='b')
+		plt.scatter(self.end_state[0],self.end_state[1],markerSize,color='r')
+		ax.grid(color='k', linestyle='-', linewidth=1)
+		ax.set_xlim([0,self.x_dim])
+		ax.set_ylim([0,self.y_dim])
+		plt.show(block=blockingStatus)
+		plt.pause(.1)
 
 
 
@@ -71,10 +95,16 @@ class NumberLine(MDP.MDP):
 def main():
 	print("starting")
 
-	n = NumberLine((1,1),(11,11),12,12)
-	print(n.is_connected((0,0),(1,1)))			# The two states are connected via "straight" line
-	print(n.is_connected((0,0),(2,-2))) 		# Has negative time
-	print(n.is_connected((0,0.4),(0.2,0))) # No direct path between the two states
+	n = NumberLine((9,9),(1,1),10,10)
+	#print(n.is_connected((0,0),(1,1)))			# The two states are connected via "straight" line
+	#print(n.is_connected((0,0),(2,-2))) 		# Has negative time
+	#print(n.is_connected((0,0.4),(0.2,0))) # No direct path between the two states
+
+	n.prm()
+
+	n.plotEdges(True)
+
+	print('finished')
 
 if __name__ == '__main__':
 	main()
