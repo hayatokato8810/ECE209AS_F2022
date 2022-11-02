@@ -39,7 +39,7 @@ class NumberLine(MDP.MDP):
 		return amplitude * np.sin(y)
 
 	def is_close(self, s1, s2):
-		if self.find_distance(s1, s2) < 0.1:
+		if self.find_distance(s1, s2) < 2:
 			return True
 		else:
 			return False
@@ -114,7 +114,7 @@ class NumberLine(MDP.MDP):
 
 def main():
 	print("starting")
-	force = [x for x in range(-1, 1, 0.1)]
+	force = [x/10 for x in range(-10, 10, 1)]
 	n = NumberLine((9,9),(1,1),10,10,0.1,0.1, force)
 	#print(n.is_connected((0,0),(1,1)))			# The two states are connected via "straight" line
 	#print(n.is_connected((0,0),(2,-2))) 		# Has negative time
