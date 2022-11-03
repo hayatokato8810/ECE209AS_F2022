@@ -7,6 +7,7 @@ __author__ = "Hayato Kato"
 import MDP
 
 from copy import copy
+import math
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -35,7 +36,7 @@ class GridWorld(MDP.MDP):
 		self.p_e = p_e
 		self.R_D = 1
 		self.R_S = 10
-		self.R_W = -100
+		self.R_W = -10
 
 		# Action Space
 		self.A = ['up','down','left','right','center']
@@ -64,6 +65,12 @@ class GridWorld(MDP.MDP):
 
 		# Discount Gamma
 		self.g = 0.8
+
+		# Observation Space
+		self.O = []
+		maxDist = math.sqrt(self.x_dim*self.x_dim+self.y_dim*self.y_dim)
+		for i in range(round(maxDist)):
+			self.O.append(i)
 
 		super().__init__(self.S,self.A,self.P,self.R,self.H,self.g)
 
@@ -131,6 +138,24 @@ class GridWorld(MDP.MDP):
 			if new_state != None:
 				space.append(new_state)
 		return space
+
+	# Observation Probabilities
+	def observePr(self, state, observation):
+		dD = min(math.dist(list(s),list(state)) for s in self.S_iceD)
+		dS = min(math.dist(list(s),list(state)) for s in self.S_iceS)
+		try:
+			h = 2/(1/dD+1/dS)
+		except:
+			h = 0
+		high_h = math.ceil(h)
+		low_h = math.floor(h)
+		if observation == high_h:
+			probability = 1-(high_h - h)
+		elif observation == low_h:
+			probability = high_h - h
+		else:
+			probability = 0
+		return probability
 	
 	''' Visualization Methods '''
 
@@ -210,15 +235,21 @@ def main():
 	# Define GridWorld object
 	world = GridWorld(grid_map,0.4)
 	# Plot transition probabilities when starting from state #17 (x=3,y=2) & moving up
-	world.plotProbability(world.P[17,0,:])
+	#world.plotProbability(world.P[17,0,:])
 
 	# Value Iteration
-	print(world.valueIteration())
-	world.plotValue()
+	#print(world.valueIteration())
+	#world.plotValue()
 
 	# Policy Iteration
-	print(world.policyIteration())
-	world.plotValue()
+	world.policyIteration()
+	#world.plotValue()
+
+	start_state = (1,2)
+
+	print(world.O)
+	print(world.observePr(start_state,2))
+	world.drawState(start_state)
 
 if __name__ == '__main__':
 	main()

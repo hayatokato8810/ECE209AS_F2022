@@ -83,19 +83,18 @@ class NumberLine(MDP.MDP):
 			if random.random() > 0.9:
 				test_v = copy(self.end_state)
 			else:
-				test_v = (random.random()*self.x_dim, random.random()*self.y_dim)
-			print(test_v)
+				test_v = ((2*random.random()-1)*self.x_dim, (2*random.random()-1)*self.y_dim)
+			#print(test_v)
 
 			closest_v = self.find_closest(test_v)
 
-			if self.is_connected(test_v, closest_v):
-				print('connected')
+			if self.is_connected(closest_v,test_v):
+				#print('connected')
 				self.V.append(test_v)
 				self.E.append((closest_v,test_v))
 
 				self.plotEdges(False)
 
-			#print(len(self.V))
 
 
 	def plotEdges(self, blockingStatus):
@@ -107,15 +106,24 @@ class NumberLine(MDP.MDP):
 		plt.scatter(self.start_state[0],self.start_state[1],markerSize,color='b')
 		plt.scatter(self.end_state[0],self.end_state[1],markerSize,color='r')
 		ax.grid(color='k', linestyle='-', linewidth=1)
-		ax.set_xlim([0,self.x_dim])
-		ax.set_ylim([0,self.y_dim])
+		ax.set_xlim([-self.x_dim,self.x_dim])
+		ax.set_ylim([-self.y_dim,self.y_dim])
+		ax.set_aspect('equal')
+		ax.set_title('Number of Edges = ' + str(len(self.E)))
+		ax.set_xlabel('Position')
+		ax.set_ylabel('Velocity')
 		plt.show(block=blockingStatus)
 		plt.pause(.1)
 
 def main():
 	print("starting")
+#<<<<<<< HEAD
 	force = [x/10 for x in range(-10, 10, 1)]
 	n = NumberLine((9,9),(1,1),10,10,0.1,0.1, force)
+#=======
+
+#	n = NumberLine((0,0),(9,9),10,10)
+#>>>>>>> 988e254 (Added Observation probabilities)
 	#print(n.is_connected((0,0),(1,1)))			# The two states are connected via "straight" line
 	#print(n.is_connected((0,0),(2,-2))) 		# Has negative time
 	#print(n.is_connected((0,0.4),(0.2,0))) # No direct path between the two states
