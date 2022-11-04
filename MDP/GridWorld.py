@@ -68,8 +68,8 @@ class GridWorld(MDP.MDP):
 
 		# Observation Space
 		self.O = []
-		maxDist = math.sqrt(self.x_dim*self.x_dim+self.y_dim*self.y_dim)
-		for i in range(round(maxDist)):
+		#maxDist = math.sqrt(self.x_dim*self.x_dim+self.y_dim*self.y_dim)
+		for i in range(5):
 			self.O.append(i)
 
 		super().__init__(self.S,self.A,self.P,self.R,self.H,self.g)
@@ -245,11 +245,44 @@ def main():
 	world.policyIteration()
 	#world.plotValue()
 
-	start_state = (1,2)
+	start_state = (2,4)
 
+	'''
+	# Compute Conditional Probability pr(o|s)
 	print(world.O)
 	print(world.observePr(start_state,2))
 	world.drawState(start_state)
+
+	pr_s = np.ones((25))/25
+	pr_o_s = np.zeros((5,25))
+	for o in range(len(world.O)):
+		for s in range(len(world.S)):
+			pr_o_s[o,s] = world.observePr(world.S[s],world.O[o])
+	joint_pr_o_s = pr_o_s * pr_s
+	pr_o = np.sum(joint_pr_o_s,1).reshape((5,1))
+	pr_s_o = joint_pr_o_s / pr_o
+	'''
+
+	actions = ['left','left','down','down','right','right']
+	est_pr = np.zeros((25,1))
+	est_pr[world.S.index(start_state)] = 1 # Initial state (we know for sure where we start off from)
+	for a in range(len(actions)):
+		action = world.A.index(actions[a])
+		sum_pr = np.zeros((25,1))
+		for s in range(len(world.S)):
+			state = s
+			sum_pr += est_pr[s] * world.P[state,action,:].reshape((25,1))
+		est_pr = copy(sum_pr)
+		world.plotProbability(est_pr)
+
+
+
+
+
+
+	#for i in range(5):
+	#	world.plotProbability(pr_s_o[i])
+
 
 if __name__ == '__main__':
 	main()
