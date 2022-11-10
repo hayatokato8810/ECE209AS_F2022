@@ -10,6 +10,7 @@ from copy import copy
 import math
 import numpy as np
 import matplotlib.pyplot as plt
+from Global import Global
 
 class GridWorld(MDP.MDP):
 	def __init__(self, worldmap, p_e):
@@ -212,6 +213,9 @@ class GridWorld(MDP.MDP):
 		plt.colorbar(im)
 		plt.show()
 
+
+			
+
 def main():
 	print("start")
 
@@ -275,7 +279,14 @@ def main():
 		est_pr = copy(sum_pr)
 		world.plotProbability(est_pr)
 
-
+	g = Global(grid_map, 0.4, start_state)
+	while (g.state != g.S_iceD or g.state != g.S_iceS):
+		#initialize observation to be something
+		#gridworld agent should propose a move on this line called "agent_action"
+		real_action = g.next_action(agent_action)
+		true_nextstate = g.next_move(real_action)
+		observation = g.return_obs(true_nextstate)
+		#this observation feeds back into the gridworld agent, repeat loop
 
 
 
