@@ -188,12 +188,12 @@ class GridWorld(MDP.MDP):
 		print(line)
 
 	# Plot all transition probabilities given particular state and action
-	def plotProbability(self, probabilities):
+	def plotProbability(self, probabilities, **kwarg):
 		probabilities = probabilities.reshape(5,5).transpose()
 		fig, ax = plt.subplots(1,1)
 		for (j,i),label in np.ndenumerate(probabilities):
 		    ax.text(i,j,round(label,4),ha='center',va='center')
-		im = ax.imshow(probabilities, origin = 'lower')
+		im = ax.imshow(probabilities, origin = 'lower',**kwarg)
 		ax.set_xticks(np.arange(-.5, self.x_dim, 1), minor=True)
 		ax.set_yticks(np.arange(-.5, self.y_dim, 1), minor=True)
 		ax.grid(which='minor', color='k', linestyle='-', linewidth=1)
@@ -251,7 +251,7 @@ def main():
 
 	start_state = (2,4)
 
-	'''
+	
 	# Compute Conditional Probability pr(o|s)
 	print(world.O)
 	print(world.observePr(start_state,2))
@@ -264,20 +264,38 @@ def main():
 			pr_o_s[o,s] = world.observePr(world.S[s],world.O[o])
 	joint_pr_o_s = pr_o_s * pr_s
 	pr_o = np.sum(joint_pr_o_s,1).reshape((5,1))
+	# Probability of particular state given observation
 	pr_s_o = joint_pr_o_s / pr_o
-	'''
+	
+	#for i in range(5):
+#		world.plotProbability(pr_s_o[i])
 
-	actions = ['left','left','down','down','right','right']
+	
+	actions = ['left','left','left','down','down','down','right','right','right']
+	observations = [3,3,4,4,3,2,2,1,0]
 	est_pr = np.zeros((25,1))
 	est_pr[world.S.index(start_state)] = 1 # Initial state (we know for sure where we start off from)
-	for a in range(len(actions)):
-		action = world.A.index(actions[a])
+
+	est_pr = np.ones((25,1))/25
+
+	
+	for t in range(len(actions)):
+
 		sum_pr = np.zeros((25,1))
-		for s in range(len(world.S)):
-			state = s
-			sum_pr += est_pr[s] * world.P[state,action,:].reshape((25,1))
-		est_pr = copy(sum_pr)
+		est_pr = np.matmul(world.P[:,world.A.index(actions[t]),:].reshape((25,25)).transpose(),est_pr.reshape((25,1)))
+
+		#world.plotProbability(est_pr)
+
+		#world.plotProbability(pr_s_o[observations[t]])
+
+		temp = pr_s_o[observations[t]].reshape((25,1)) * est_pr
+		est_pr = temp / np.linalg.norm(temp)
+
 		world.plotProbability(est_pr)
+		
+		
+
+
 
 	g = Global(grid_map, 0.4, start_state)
 	while (g.state != g.S_iceD or g.state != g.S_iceS):
