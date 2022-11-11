@@ -40,7 +40,7 @@ class GridWorld(MDP.MDP):
 		self.R_W = -10
 
 		# Action Space
-		self.A = ['up','down','left','right','center']
+		self.A = ['up','down','left','right','stay']
 
 		# Transition Probability
 		N_S = len(self.S)
@@ -188,7 +188,7 @@ class GridWorld(MDP.MDP):
 		print(line)
 
 	# Plot all transition probabilities given particular state and action
-	def plotProbability(self, probabilities, **kwarg):
+	def plotProbability(self, probabilities, time=None, blocking=True, **kwarg):
 		probabilities = probabilities.reshape(5,5).transpose()
 		fig, ax = plt.subplots(1,1)
 		for (j,i),label in np.ndenumerate(probabilities):
@@ -197,8 +197,10 @@ class GridWorld(MDP.MDP):
 		ax.set_xticks(np.arange(-.5, self.x_dim, 1), minor=True)
 		ax.set_yticks(np.arange(-.5, self.y_dim, 1), minor=True)
 		ax.grid(which='minor', color='k', linestyle='-', linewidth=1)
+		if time != None:
+			ax.set_title('Time t = ' + str(time))
 		plt.colorbar(im)
-		plt.show()
+		plt.show(block = blocking)
 
 	# Plot optimal value function across all states
 	def plotValue(self):
@@ -250,7 +252,6 @@ def main():
 	#world.plotValue()
 
 	start_state = (2,4)
-
 	
 	# Compute Conditional Probability pr(o|s)
 	print(world.O)
@@ -269,21 +270,28 @@ def main():
 	
 	#for i in range(5):
 #		world.plotProbability(pr_s_o[i])
-
 	
 	actions = ['left','left','left','down','down','down','right','right','right']
 	observations = [3,3,4,4,3,2,2,1,0]
+
+	#actions = ['left','stay','left','stay','down','down','stay','right','right']
+	#for t in range(len(actions)):
+
+
 	est_pr = np.zeros((25,1))
 	est_pr[world.S.index(start_state)] = 1 # Initial state (we know for sure where we start off from)
 
 	est_pr = np.ones((25,1))/25
 
+	world.plotProbability(est_pr,0,vmin=0,vmax=1)
+	
+	plt.pause(1)
 	
 	for t in range(len(actions)):
 
-		sum_pr = np.zeros((25,1))
 		est_pr = np.matmul(world.P[:,world.A.index(actions[t]),:].reshape((25,25)).transpose(),est_pr.reshape((25,1)))
 
+		print('action:' + actions[t])
 		#world.plotProbability(est_pr)
 
 		#world.plotProbability(pr_s_o[observations[t]])
@@ -291,7 +299,10 @@ def main():
 		temp = pr_s_o[observations[t]].reshape((25,1)) * est_pr
 		est_pr = temp / np.linalg.norm(temp)
 
-		world.plotProbability(est_pr)
+		print('observation:' + str(observations[t]))
+		plt.close()
+		world.plotProbability(est_pr,time = t+1,vmin=0,vmax=1)
+		plt.pause(1)
 		
 		
 
