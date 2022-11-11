@@ -25,6 +25,9 @@ class NumberLine(MDP.MDP):
 		self.mass = 1
 		self.t_max = 20
 		self.amplitude = 1
+		self.vmax = 10
+		self.pc = 0.1
+		self.particles = None
 		
 		# Edges
 		self.E = []
@@ -33,7 +36,12 @@ class NumberLine(MDP.MDP):
 		return y + v
 
 	def v_next(self, v, input, field):
-		return v + (1/self.mass)*(input+field)
+		roll = np.random()
+		if roll < (abs(v) - self.y_dim * self.pc / self.y_dim):
+			velocity = 0
+		else:
+			velocity = v + (1/self.mass)*(input+field) + np.random.normal(0, (0.1*v),1)
+		return velocity
 
 	def field(self, y, amplitude): #assuming field = Acos(y)
 		return amplitude * np.sin(y)
@@ -95,8 +103,6 @@ class NumberLine(MDP.MDP):
 
 				self.plotEdges(False)
 
-
-
 	def plotEdges(self, blockingStatus):
 		markerSize = 50
 		plt.close()
@@ -114,6 +120,30 @@ class NumberLine(MDP.MDP):
 		ax.set_ylabel('Velocity')
 		plt.show(block=blockingStatus)
 		plt.pause(.1)
+
+	def particle_filter(self, Nparticles, random: bool):
+		particles = np.array((Nparticles, 3))
+		particles[:,2] = np.ones((1, Nparticles))/Nparticles
+		if random:
+			particles[:,0] = np.random.uniform(-1*self.x_dim, self.x_dim, Nparticles)
+			particles[:,1] = np.random.uniform(-1*self.y_dim, self.y_dim, Nparticles)
+		else:
+			particles[:,0] = np.ones((1,Nparticles))*self.start_state[0]
+			particles[:,1] = np.ones((1,Nparticles))*self.start_state[1]
+		self.particles = particles
+		return particles
+	
+	#def update_state(self, action): #returns next state
+	#def simulate(self, state, action): #returns observation 
+	#step 1: update states of each particle given action
+	#step 2: update weights of each particle given observation from robot
+	#robot state is highest weight particle
+	#someone needs to write global class to keep track of robot xd
+
+		
+
+
+			
 
 def main():
 	print("starting")
