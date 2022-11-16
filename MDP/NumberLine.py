@@ -140,6 +140,23 @@ class NumberLine(MDP.MDP):
 	#robot state is highest weight particle
 	#someone needs to write global class to keep track of robot xd
 
+    def update_particle_states(self, particles, action):
+        particles[:, 0] += particles[:, 1]
+        particles[:, 1] += action
+        collision_prob = (abs(particles[:, 1]) - self.vmax) * self.pc / self.vmax
+        mask = np.random.uniform(size=len(particles)) > collision_prob
+        particles[:, 1] *= mask
+        return particles
+
+    def update_particle_weights(self, particles, obs):
+        # sigma = 0.5v
+        sigma = 0.5 * particles[:, 1]
+        var = sigma ** 2
+        p_o_si = -((obs - particles[:, 0]) ** 2) / var
+        p_o_si = np.exp(p_o_si) / np.sqrt(2 * np.pi * var)
+        particles[:, 2] = (p_o_si * particles[:, 2]) / np.sum(p_o_si * particles[:, 2])
+        return particles
+
 		
 
 
