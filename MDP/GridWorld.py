@@ -297,7 +297,7 @@ def main():
 		#world.plotProbability(pr_s_o[observations[t]])
 
 		temp = pr_s_o[observations[t]].reshape((25,1)) * est_pr
-		est_pr = temp / np.linalg.norm(temp)
+		est_pr = temp / np.linalg.norm(temp,1)
 
 		print('observation:' + str(observations[t]))
 		plt.close()
