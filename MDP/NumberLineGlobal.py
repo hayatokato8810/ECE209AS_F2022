@@ -13,7 +13,7 @@ class NumberLineGlobal(object):
         self.mass = 1
         self.input = 0
         self.observation = 0
-        self.particles = self.particle_filter(5, True)
+        self.particles = self.particle_filter(100, True)
 
     def particle_filter(self, Nparticles, random: bool): #only call this while initializing
         particles = np.zeros((Nparticles, 3))
@@ -81,17 +81,21 @@ class NumberLineGlobal(object):
         return particles
 
     def plot(self):
-        fig = plt.subplot(1,1,1)
-        fig.scatter(self.particles[:,0], self.particles[:,1], color = "red")
-        fig.scatter(self.y, self.v, color = "black")
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection = "3d")
+        ax.scatter(self.particles[:,0], self.particles[:,1], self.particles[:,2], color = "red")
+        ax.scatter(self.y, self.v, 1, color = "black")
+        ax.set_zlim(0,1)
+        ax.set_zlabel("weight")
         plt.xlim((-40, 40)); plt.ylim((-40, 40))
+        plt.xlabel("position"); plt.ylabel("velocity")
         plt.title(self.input)
         plt.show()
 #need to plot weights
 #need to make all particle noise independent
 def main():
     g = NumberLineGlobal((0, 0), (-10, 10), (-10, 10), (-1, 1))
-    for t in range(5):
+    for t in range(100):
         g.next()
 
 if __name__ == '__main__':
