@@ -32,11 +32,12 @@ class NumberLineGlobal(object):
 
     def v_next(self, input, field):
         roll = np.random.random()
-        if roll < (abs(self.v) - self.vmax * self.pc / self.vmax):
+        if roll < (abs(self.v) - self.vmax) * self.pc / self.vmax:
             print("boom")
             velocity = 0
         else:
-            velocity = self.v + (1/self.mass)*(input+field) + np.random.normal(0, abs(0.1*self.v))
+            self.wobble = np.random.normal(0, abs(0.1*self.v))
+            velocity = self.v + (1/self.mass)*(input+field) + self.wobble
         return velocity
 
     def field(self, amplitude): #assuming field = Acos(y)
@@ -95,12 +96,18 @@ class NumberLineGlobal(object):
         plt.show()
 
     def plot2d(self):
-        plt.scatter(self.particles[:,0], self.particles[:,1], s=self.particles[:,2] * 100, color="red")
+        ids = np.argsort(self.particles[:,2])[-5:]
+        color = ["red"] * len(self.particles)
+        c = ["black", "orange" ,"brown", "yellow", "blue"]
+        for i,id in enumerate(ids):
+            color[id] = c[i]
+        plt.scatter(self.particles[:,0], self.particles[:,1], s=self.particles[:,2] * 100, color=color)
         plt.scatter(self.y, self.v, s=100, color="green")
-        for i in range(len(self.particles)):
-            plt.annotate(i+1, (self.particles[i,0], self.particles[i,1]), fontsize=min(10, self.particles[i,2] * 100))
+
+        #for i in temp:
+            #plt.annotate(i+1, (self.particles[i,0], self.particles[i,1])) #fontsize=min(10, self.particles[i,2] * 100))
         plt.xlabel("position"); plt.ylabel("velocity")
-        plt.title(self.input)
+        plt.title("y = %f, v = %f, f = %f, wobble = %f" % (self.y, self.v, self.input+self.field(1), self.wobble))
         plt.show()
 #need to plot weights
 #need to make all particle noise independent
