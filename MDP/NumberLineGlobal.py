@@ -24,6 +24,7 @@ class NumberLineGlobal(object):
         else:
             particles[:,0] = np.ones((1,Nparticles))*self.y
             particles[:,1] = np.ones((1,Nparticles))*self.v
+        
         return particles     
 
     def y_next(self):
@@ -65,7 +66,8 @@ class NumberLineGlobal(object):
 
     def update_particle_states(self, particles, action):
         particles[:, 0] += particles[:, 1]
-        particles[:, 1] += action + self.field(1)
+        for i in range(len(particles[:, 1])):
+            particles[i, 1] += action + self.field(1) + np.random.normal(0, abs(0.1*particles[i,1]))
         collision_prob = (abs(particles[:, 1]) - self.vmax) * self.pc / self.vmax
         mask = np.random.uniform(size=len(particles)) > collision_prob
         particles[:, 1] *= mask
@@ -89,7 +91,7 @@ class NumberLineGlobal(object):
         ax.set_zlabel("weight")
         plt.xlim((-40, 40)); plt.ylim((-40, 40))
         plt.xlabel("position"); plt.ylabel("velocity")
-        plt.title(self.input)
+        plt.title("input = " + str(self.input))
         plt.show()
 #need to plot weights
 #need to make all particle noise independent
