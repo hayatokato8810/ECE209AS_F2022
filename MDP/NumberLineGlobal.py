@@ -13,7 +13,7 @@ class NumberLineGlobal(object):
         self.mass = 1
         self.input = 0
         self.observation = 0
-        self.particles = self.particle_filter(100, True)
+        self.particles = self.particle_filter(1000, True)
 
     def particle_filter(self, Nparticles, random: bool): #only call this while initializing
         particles = np.zeros((Nparticles, 3))
@@ -56,9 +56,9 @@ class NumberLineGlobal(object):
         self.v = self.v_next(self.input, self.field(1))
         self.observation = self.observe()
         self.update_particles()
-        self.plot()
-        print(self.particles[:,0])
-        print(self.particles[:,1])
+        self.plot2d()
+        # print(self.particles[:,0])
+        # print(self.particles[:,1])
 
     def update_particles(self):
         self.particles = self.update_particle_states(self.particles, self.input)
@@ -92,6 +92,15 @@ class NumberLineGlobal(object):
         plt.xlim((-40, 40)); plt.ylim((-40, 40))
         plt.xlabel("position"); plt.ylabel("velocity")
         plt.title("input = " + str(self.input))
+        plt.show()
+
+    def plot2d(self):
+        plt.scatter(self.particles[:,0], self.particles[:,1], s=self.particles[:,2] * 100, color="red")
+        plt.scatter(self.y, self.v, s=100, color="green")
+        for i in range(len(self.particles)):
+            plt.annotate(i+1, (self.particles[i,0], self.particles[i,1]), fontsize=min(10, self.particles[i,2] * 100))
+        plt.xlabel("position"); plt.ylabel("velocity")
+        plt.title(self.input)
         plt.show()
 #need to plot weights
 #need to make all particle noise independent
