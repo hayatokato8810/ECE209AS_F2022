@@ -97,17 +97,19 @@ class NumberLineGlobal(object):
 
     def plot2d(self):
         ids = np.argsort(self.particles[:,2])[-5:]
+        print([self.particles[id] for id in ids])
         color = ["red"] * len(self.particles)
-        c = ["black", "orange" ,"brown", "yellow", "blue"]
+        c = ["black", "brown" ,"gold", "orange", "blue"]
         for i,id in enumerate(ids):
             color[id] = c[i]
         plt.scatter(self.particles[:,0], self.particles[:,1], s=self.particles[:,2] * 100, color=color)
         plt.scatter(self.y, self.v, s=100, color="green")
-
+        plt.xlim((self.y - 15, self.y + 15)); plt.ylim((self.v-5, self.v+5)) 
+        plt.annotate("y = %f, v = %f, w = %f" % (self.particles[ids[-1]][0], self.particles[ids[-1]][1], self.particles[ids[-1]][2]), (self.particles[ids[-1]][0], self.particles[ids[-1]][1]))
         #for i in temp:
             #plt.annotate(i+1, (self.particles[i,0], self.particles[i,1])) #fontsize=min(10, self.particles[i,2] * 100))
         plt.xlabel("position"); plt.ylabel("velocity")
-        plt.title("y = %f, v = %f, f = %f, wobble = %f" % (self.y, self.v, self.input+self.field(1), self.wobble))
+        plt.title("y = %f, v = %f, force = %f" % (self.y, self.v, self.input+self.field(1)))
         plt.show()
 #need to plot weights
 #need to make all particle noise independent
