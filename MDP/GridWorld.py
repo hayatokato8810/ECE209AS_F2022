@@ -226,8 +226,11 @@ class GridWorld(MDP.MDP):
 		plt.colorbar(im)
 		plt.show()
 
-
-			
+	def bayesFilter(self, est_pr, pr_s_o, action, observation):
+		belief_pr = np.matmul(self.P[:,self.A.index(action),:].reshape((25,25)).transpose(),copy(est_pr).reshape((25,1)))
+		temp = pr_s_o[observation].reshape((25,1)) * belief_pr
+		belief_pr = temp / np.linalg.norm(temp,1)
+		return belief_pr
 
 def main():
 	print("start")
@@ -276,6 +279,8 @@ def main():
 	maxConfidence = 0
 	actualIceD = [(0,0)]
 	actualIceS = [(0,1)]
+
+
 	for iceD in world.S:
 		if iceD not in world.S_obs:
 			for iceS in world.S:
@@ -285,9 +290,7 @@ def main():
 					# Bayes Filtering
 					est_pr = np.ones((25,1))/25
 					for t in range(len(actions)):
-						est_pr = np.matmul(world.P[:,world.A.index(actions[t]),:].reshape((25,25)).transpose(),est_pr.reshape((25,1)))
-						temp = pr_s_o[observations[t]].reshape((25,1)) * est_pr
-						est_pr = temp / np.linalg.norm(temp,1)
+						est_pr = world.bayesFilter(est_pr, pr_s_o, actions[t], observations[t])
 					confidence = max(est_pr)
 					print(confidence)
 					if maxConfidence < confidence:
@@ -298,6 +301,34 @@ def main():
 	print(actualIceD)
 	print(actualIceS)
 
+	pr_r_o_s = np.zeros((25*24,5,25))
+	i = 0
+	for iceD in world.S:
+		if iceD not in world.S_obs:
+			for iceS in world.S:
+				if iceS not in world.S_obs and iceS != iceD:
+					pr_r_o_s[i,:,:] = world.conditionalObservePr([iceD], [iceS])
+					i += 1
+	print(pr_r_o_s.shape)
+
+	est_pr = np.ones((25,1))/25
+	reward_pr = np.ones((25*24,1))/(25*24)
+	for t in range(len(actions)):
+		i = 0
+		for iceD in world.S:
+			if iceD not in world.S_obs:
+				for iceS in world.S:
+					if iceS not in world.S_obs and iceS != iceD:
+						belief_pr = world.bayesFilter(est_pr, pr_r_o_s[i,:,:],actions[t], observations[t])
+						#est_pr += reward_pr[i]*belief_pr
+						reward_pr[i] *= max(belief_pr)
+						i += 1
+		print(t)
+		#est_pr = np.matmul(reward_pr, est_pr)
+		reward_pr = reward_pr / np.linalg.norm(reward_pr,1)
+		world.plotProbability(est_pr, time=t, blocking=True,vmin=0,vmax=1)
+
+# ???
 
 
 
