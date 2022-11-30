@@ -9,6 +9,7 @@ import MDP
 from copy import copy
 import math
 import numpy as np
+from numpy.random import choice
 import matplotlib.pyplot as plt
 from Global import Global
 
@@ -105,6 +106,20 @@ class GridWorld(MDP.MDP):
 			exit()
 		return tuple(desired_state)
 
+	def updateState(self, state, action):
+		try:
+			s = self.S.index(state)
+			a = self.A.index(action)
+		except:
+			print("Not a valid state action pair")
+			exit()
+		p = self.P[s,a,:]
+		randomIdx = choice(range(len(p)),p=p)
+		print(self.S[randomIdx])
+		return randomIdx
+
+
+
 	# Transition Probabilities
 	def pr(self, state, action, next_state):
 		probability = 0
@@ -141,9 +156,10 @@ class GridWorld(MDP.MDP):
 		return space
 
 	# Observation Probabilities
-	def observePr(self, state, observation, S_iceD, S_iceS):
-		dD = min(math.dist(list(s),list(state)) for s in S_iceD)
-		dS = min(math.dist(list(s),list(state)) for s in S_iceS)
+	def observePr(self, state:tuple[int], observation:int, environment:tuple[tuple[int]]):
+		S_iceD, S_iceS = environment
+		dD = math.dist(list(S_iceD),list(state))
+		dS = math.dist(list(S_iceS),list(state))
 		try:
 			h = 2/(1/dD+1/dS)
 		except:
@@ -158,16 +174,32 @@ class GridWorld(MDP.MDP):
 			probability = 0
 		return probability
 
-	def conditionalObservePr(self, S_iceD, S_iceS):
+	def conditionalObservePr(self, environment):
+		S_iceD, S_iceS = environment
 		pr_s = np.ones((25))/25
 		pr_o_s = np.zeros((5,25))
 		for o in range(len(self.O)):
 			for s in range(len(self.S)):
-				pr_o_s[o,s] = self.observePr(self.S[s],self.O[o],S_iceD, S_iceS)
+				pr_o_s[o,s] = self.observePr(self.S[s],self.O[o],(S_iceD, S_iceS))
 		joint_pr_o_s = pr_o_s * pr_s
 		pr_o = np.sum(joint_pr_o_s,1).reshape((5,1))
 		# Probability of particular state given observation
 		return joint_pr_o_s / pr_o
+
+	# Joint Probability of State and Observation given Environment
+	def pr_SO_E(self, environment):
+		S_iceD, S_iceS = environment
+		pr_S = np.ones((25,1))/25
+		temp = np.zeros((25,5))
+		for s in range(len(self.S)):
+			for o in range(len(self.O)):
+				temp[s,o] = self.observePr(self.S[s],self.O[o],environment)
+		return temp * pr_S
+
+	# Probability of Environment given State and Observation
+	def pr_E_SO(self, state, observation):
+		pr_E = np.ones((600))/600
+		#pr_OS_E = 
 	
 	''' Visualization Methods '''
 
@@ -232,6 +264,16 @@ class GridWorld(MDP.MDP):
 		belief_pr = temp / np.linalg.norm(temp,1)
 		return belief_pr
 
+	def evaluateUpdateFunction(self, state, action, iterations:int):
+		p = np.zeros((25,1))
+		for i in range(iterations):
+			index = self.updateState(state, action)
+			p[index] += 1
+		p = p / iterations
+		self.plotProbability(p)
+
+
+
 def main():
 	print("start")
 
@@ -269,7 +311,7 @@ def main():
 	
 	# Compute Conditional Probability pr(o|s)
 	print(world.O)
-	print(world.observePr(start_state,2,world.S_iceD, world.S_iceS))
+	#print(world.observePr(start_state,2,(world.S_iceD, world.S_iceS)))
 	world.drawState(start_state)
 
 	actions = ['left','left','left','down','down','down','right','right','right']
@@ -280,7 +322,16 @@ def main():
 	actualIceD = [(0,0)]
 	actualIceS = [(0,1)]
 
+	#world.evaluateUpdateFunction(start_state, 'left', 10000)
 
+	for iceD in world.S:
+		if iceD not in world.S_obs:
+			for iceS in world.S:
+				if iceS not in world.S_obs and iceS != iceD:
+					world.pr_SO_E((iceD,iceS))
+
+
+	'''
 	for iceD in world.S:
 		if iceD not in world.S_obs:
 			for iceS in world.S:
@@ -301,33 +352,37 @@ def main():
 	print(actualIceD)
 	print(actualIceS)
 
-	pr_r_o_s = np.zeros((25*24,5,25))
-	i = 0
+	'''
+
+	'''
+	pr_r_s_o = np.zeros((25*24,5,25))
+	rewardIndex = 0
 	for iceD in world.S:
 		if iceD not in world.S_obs:
 			for iceS in world.S:
 				if iceS not in world.S_obs and iceS != iceD:
-					pr_r_o_s[i,:,:] = world.conditionalObservePr([iceD], [iceS])
-					i += 1
-	print(pr_r_o_s.shape)
+					pr_r_s_o[rewardIndex,:,:] = world.conditionalObservePr([iceD], [iceS])
+					rewardIndex += 1
+	print(pr_r_s_o.shape)
 
 	est_pr = np.ones((25,1))/25
 	reward_pr = np.ones((25*24,1))/(25*24)
 	for t in range(len(actions)):
 		i = 0
+		est_pr = np.zeros((25,1))
 		for iceD in world.S:
 			if iceD not in world.S_obs:
 				for iceS in world.S:
 					if iceS not in world.S_obs and iceS != iceD:
-						belief_pr = world.bayesFilter(est_pr, pr_r_o_s[i,:,:],actions[t], observations[t])
-						#est_pr += reward_pr[i]*belief_pr
-						reward_pr[i] *= max(belief_pr)
+						belief_pr = world.bayesFilter(est_pr, pr_r_s_o[i,:,:],actions[t], observations[t])
+						est_pr += reward_pr[i]*belief_pr
 						i += 1
 		print(t)
 		#est_pr = np.matmul(reward_pr, est_pr)
 		reward_pr = reward_pr / np.linalg.norm(reward_pr,1)
-		world.plotProbability(est_pr, time=t, blocking=True,vmin=0,vmax=1)
 
+		world.plotProbability(est_pr, time=t, blocking=True,vmin=0,vmax=1)
+	'''
 # ???
 
 
