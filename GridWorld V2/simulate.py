@@ -9,7 +9,7 @@ def main():
 	def animate(time,ax):
 		ax.cla()
 		world.plotStateSpace(ax)
-		world.updateState((1,0))
+		world.updateState((0,-1))
 
 	print("Starting...")
 
@@ -43,12 +43,13 @@ def main():
 	)
 
 	# Plot Figure
-	fig = plt.figure(figsize=(6,5))
+	fig = plt.figure(figsize=(5,5))
 	ax = plt.subplot()
 
-	obs = 4
-	world.plotProbDistOverStateSpace(ax,world.observation[:,obs] / sum(world.observation[:,obs],0))
+	world.plotStateSpace(ax)
 
+	anim = animation.FuncAnimation(fig, animate, fargs = (ax,), interval = 100)
+	
 	plt.tight_layout()
 	plt.show()
 

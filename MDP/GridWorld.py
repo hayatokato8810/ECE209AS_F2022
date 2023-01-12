@@ -187,17 +187,25 @@ class GridWorld(MDP.MDP):
 		return joint_pr_o_s / pr_o
 
 	# Joint Probability of State and Observation given Environment
-	def pr_SO_E(self, environment):
-		S_iceD, S_iceS = environment
-		pr_S = np.ones((25,1))/25
-		temp = np.zeros((25,5))
-		for s in range(len(self.S)):
-			for o in range(len(self.O)):
-				temp[s,o] = self.observePr(self.S[s],self.O[o],environment)
-		return temp * pr_S
+	def pr_O_SE(self):
+		pr_O_SE = np.zeros((25,5,600))
+		e = 0
+		for iceD in self.S:
+			if iceD not in self.S_obs:
+				for iceS in self.S:
+					if iceS not in self.S_obs and iceS != iceD:
+						environment = (iceD, iceS)
+						for s in range(len(self.S)):
+							for o in range(len(self.O)):
+								pr_O_SE[s,o,e] = self.observePr(self.S[s],self.O[o],environment)
+						e+=1
+		return pr_O_SE
+
+	def pr_SO_E(self,beliefStatePr):
+		return self.pr_O_SE() * np.expand_dims(beliefStatePr,axis=1)
 
 	# Probability of Environment given State and Observation
-	def pr_E_SO(self, state, observation):
+	def pr_E_SO(self, state, observation, beliefEnvPr):
 		pr_E = np.ones((600))/600
 		#pr_OS_E = 
 	
@@ -324,11 +332,13 @@ def main():
 
 	#world.evaluateUpdateFunction(start_state, 'left', 10000)
 
-	for iceD in world.S:
-		if iceD not in world.S_obs:
-			for iceS in world.S:
-				if iceS not in world.S_obs and iceS != iceD:
-					world.pr_SO_E((iceD,iceS))
+	beliefStatePr = np.ones((25,600))/(25)
+	#print(np.sum(beliefStatePr,axis=0))
+	print(np.sum(world.pr_O_SE(),axis=1))
+	print(np.sum(world.pr_O_SE(),axis=1).shape)
+	#print(np.sum(np.sum(world.pr_SO_E(beliefStatePr),axis=0),axis=0).shape)
+
+
 
 
 	'''
