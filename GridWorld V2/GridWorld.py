@@ -1,7 +1,9 @@
 import math
 import numpy as np
+from copy import copy
 from collections import defaultdict 
 from numpy.random import choice
+from time import perf_counter
 import matplotlib.pyplot as plt
 
 class GridWorld():
@@ -59,7 +61,7 @@ class GridWorld():
 		self.H = 10
 
 		# Discount Gamma
-		self.g = 0.8
+		self.G = 0.8
 
 		# Observation
 		self.O = []
@@ -70,9 +72,8 @@ class GridWorld():
 			for o in range(N_O):
 				self.observation[s,o] = self.observationProbability(self.S[s], o, ((2,2),(2,0)))
 
-		print(sum(self.observation,0))
-
-
+		# Value Function
+		self.V, self.Pi, self.iter = self.valueIteration()
 
 # === Computational Functions ===
 	# Defines the system dynamics of the agent
@@ -136,6 +137,35 @@ class GridWorld():
 			probability = 0
 		return probability
 
+	# Run Value Iteration
+	def valueIteration(self):
+		N_S = len(self.S)
+		N_A = len(self.A)
+
+		V = np.zeros(N_S)
+		Q = np.zeros((N_S,N_A))
+		Pi = np.zeros(N_S)
+
+		k = 0
+		t1_start = perf_counter()
+		while True:
+			for s in range(N_S):
+				for a in range(N_A):
+					Q[s,a] = sum(self.P[s,a]*(self.R[s,a]+self.G*V))
+				new_V  = np.amax(Q, axis=1)
+				new_Pi = np.argmax(Q, axis=1)
+			temp = np.linalg.norm(V - new_V)
+			if temp < 0.00000001:
+				break
+			V  = copy(new_V)
+			Pi = copy(new_Pi)
+			k += 1
+		t1_stop = perf_counter()
+		print(f'Elapsed Time: t={t1_stop-t1_start:.6f}s')
+
+		return V,Pi,k
+
+
 	# Updates the current state of the agent stociastically based off a desired action
 	def updateState(self, action:vector):
 		try:
@@ -179,11 +209,11 @@ class GridWorld():
 		ax.grid(which='minor', color='black', linestyle='-', linewidth=1)
 		ax.set_aspect('equal')
 
-	def plotProbDistOverStateSpace(self, ax:plt.axis, pr:np.ndarray, **kwarg):
-		pr = pr.reshape(self.DIM).transpose()
-		for (j,i),label in np.ndenumerate(pr):
+	def plotProbDistOverStateSpace(self, ax:plt.axis, val:np.ndarray, **kwarg):
+		val = val.reshape(self.DIM).transpose()
+		for (j,i),label in np.ndenumerate(val):
 			ax.text(i,j,round(label,4),ha='center',va='center')
-		im = ax.imshow(pr, origin = 'lower',vmin=0,vmax=1,**kwarg)
+		im = ax.imshow(val, origin = 'lower',vmin=0,vmax=1,**kwarg)
 		plt.colorbar(im)
 		ax.set_xticks(np.arange(0, self.DIM[0], 1))
 		ax.set_yticks(np.arange(0, self.DIM[1], 1))
@@ -194,6 +224,38 @@ class GridWorld():
 		ax.grid(which='minor', color='k', linestyle='-', linewidth=1)
 		ax.set_aspect('equal')
 
+	def plotValueFunction(self, ax:plt.axis, val:np.ndarray, **kwarg):
+		val = val.reshape(self.DIM).transpose()
+		for (j,i),label in np.ndenumerate(val):
+			ax.text(i,j,round(label,4),ha='center',va='center')
+		im = ax.imshow(val, origin = 'lower',**kwarg)
+		plt.colorbar(im)
+		ax.set_xticks(np.arange(0, self.DIM[0], 1))
+		ax.set_yticks(np.arange(0, self.DIM[1], 1))
+		ax.set_xticks(np.arange(-.5, self.DIM[0]+.5, 1), minor=True)
+		ax.set_yticks(np.arange(-.5, self.DIM[1]+.5, 1), minor=True)
+		ax.set_xlim([-.5, self.DIM[0]-.5])
+		ax.set_ylim([-.5, self.DIM[1]-.5])
+		ax.grid(which='minor', color='k', linestyle='-', linewidth=1)
+		ax.set_aspect('equal')
+
+	def plotPolicyFunction(self, ax:plt.axis, val:np.ndarray, **kwarg):
+		val = val.reshape(self.DIM).transpose()
+		for (j,i),d in np.ndenumerate(val):
+			if (i,j) not in self.S_DICT[1]:
+				direction = self.A[d]
+				if direction != (0,0):
+					ax.quiver(i,j,direction[0],direction[1],pivot='mid',headwidth=5)
+				else:
+					ax.scatter(i,j,100,marker='x',color='k',linewidth=3)
+		ax.set_xticks(np.arange(0, self.DIM[0], 1))
+		ax.set_yticks(np.arange(0, self.DIM[1], 1))
+		ax.set_xticks(np.arange(-.5, self.DIM[0]+.5, 1), minor=True)
+		ax.set_yticks(np.arange(-.5, self.DIM[1]+.5, 1), minor=True)
+		ax.set_xlim([-.5, self.DIM[0]-.5])
+		ax.set_ylim([-.5, self.DIM[1]-.5])
+		ax.grid(which='minor', color='k', linestyle='-', linewidth=1)
+		ax.set_aspect('equal')
 
 
 

@@ -1,19 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.animation as animation
 
 from GridWorld import GridWorld
 
 def main():
-
-	def animate(time,ax):
-		ax.cla()
-		world.plotStateSpace(ax)
-		nextAction = world.A[world.Pi[world.S.index(world.currentState)]]
-		world.updateState(nextAction)
-		ax.set_title(f't = {time}')
-
-
 	print("Starting...")
 
 	# Define Gridworld map via matrix representation
@@ -46,13 +36,13 @@ def main():
 	)
 
 	# Plot Figure
-	fig = plt.figure(figsize=(5,5))
+	fig = plt.figure(figsize=(6,5))
 	ax = plt.subplot()
 
-	world.plotStateSpace(ax)
+	world.plotValueFunction(ax, world.V)
+	ax.set_title(f'Optimal Value Function at $k = {world.iter}$')
 
-	anim = animation.FuncAnimation(fig, animate, fargs = (ax,), interval = 500)
-	
+	plt.tight_layout()
 	plt.show()
 
 

@@ -1,16 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.animation as animation
 
 from GridWorld import GridWorld
 
 def main():
-
-	def animate(time,ax):
-		ax.cla()
-		world.plotStateSpace(ax)
-		world.updateState((1,0))
-
 	print("Starting...")
 
 	# Define Gridworld map via matrix representation
@@ -45,9 +38,6 @@ def main():
 	# Plot Figure
 	fig = plt.figure(figsize=(6,5))
 	ax = plt.subplot()
-
-	obs = 4
-	world.plotProbDistOverStateSpace(ax,world.observation[:,obs] / sum(world.observation[:,obs],0))
 
 	plt.tight_layout()
 	plt.show()
