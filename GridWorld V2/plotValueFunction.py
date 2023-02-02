@@ -15,7 +15,7 @@ def main():
 		rewardSpace = rewardSpace,
 		errorProb = 0.2,
 		startState = (2,4),
-		method = "Value Iteration",
+		method = "Policy Iteration",
 	)
 
 	# Plot Figure

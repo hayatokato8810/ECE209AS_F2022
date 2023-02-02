@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 class GridWorld():
 	vector = tuple[int]
 
-	threshold = 0.00000001
+	threshold = 0.0001
 
 	def __init__(self, 
 		stateSpace:np.ndarray, 
@@ -154,11 +154,8 @@ class GridWorld():
 		Pi = np.zeros(N_S)
 		Q = np.zeros((N_S,N_A))
 
-
 		k = 0
 		t_start = perf_counter()
-
-		#fig = plt.figure(figsize=(11,5))
 		while True:
 			for s in range(N_S):
 				old_V = copy(V)
@@ -168,17 +165,6 @@ class GridWorld():
 				V  = np.amax(Q, axis=1)
 				Pi = np.argmax(Q, axis=1)
 			diff = np.linalg.norm(V - old_V)
-			
-			'''
-			ax1 = plt.subplot(121)
-			ax2 = plt.subplot(122)
-			self.plotPolicyFunction(ax1, Pi)
-			self.plotValueFunction(ax2, V)
-			plt.tight_layout()
-			plt.show(block=False)
-			plt.pause(0.1)
-			'''
-
 			if diff < GridWorld.threshold:
 				break
 			k += 1
