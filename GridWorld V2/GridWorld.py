@@ -9,11 +9,15 @@ import matplotlib.pyplot as plt
 class GridWorld():
 	vector = tuple[int]
 
+	threshold = 0.00000001
+
 	def __init__(self, 
 		stateSpace:np.ndarray, 
 		actionSpace:list[vector],
+		rewardSpace:np.ndarray,
 		errorProb:float,
-		startState:vector,
+		startState:vector = None,
+		method:str = "Value Iteration",
 	):
 		self.DIM = np.shape(stateSpace)
 		self.P_E = errorProb
@@ -45,17 +49,14 @@ class GridWorld():
 
 		# Reward
 		self.R_DICT = defaultdict(int)
-		self.R_DICT[2] = 1   # Icecream Store D
-		self.R_DICT[3] = 10  # Icecream Store S
-		self.R_DICT[4] = -10 # Road
+		for index,r in enumerate(rewardSpace):
+			self.R_DICT[index] = r
 		self.R = np.zeros((N_S,N_A,N_S))
+		reward = np.zeros(N_S)
+		for index in range(len(rewardSpace)):
+			reward += np.array(list(self.R_DICT[index]*(self.S[s] in self.S_DICT[index]) for s in range(N_S)))
 		for s in range(N_S):
-			if self.S[s] in self.S_DICT[2]:
-				self.R[s,:,:] = self.R_DICT[2]
-			elif self.S[s] in self.S_DICT[3]:
-				self.R[s,:,:] = self.R_DICT[3]
-			elif self.S[s] in self.S_DICT[4]:
-				self.R[s,:,:] = self.R_DICT[4]
+			self.R[s,:,:] = reward[s]
 
 		# Horizon
 		self.H = 10
@@ -72,8 +73,15 @@ class GridWorld():
 			for o in range(N_O):
 				self.observation[s,o] = self.observationProbability(self.S[s], o, ((2,2),(2,0)))
 
-		# Value Function
-		self.V, self.Pi, self.iter = self.valueIteration()
+		# Value/Policy Function
+		self.method = method
+		if method == "Value Iteration":
+			self.V, self.Pi, self.iter = self.valueIteration()
+		elif method == "Policy Iteration":
+			self.V, self.Pi, self.iter = self.policyIteration()
+		else:
+			print("Not a valid reinforcement learning method")
+			exit()
 
 # === Computational Functions ===
 	# Defines the system dynamics of the agent
@@ -143,28 +151,78 @@ class GridWorld():
 		N_A = len(self.A)
 
 		V = np.zeros(N_S)
-		Q = np.zeros((N_S,N_A))
 		Pi = np.zeros(N_S)
+		Q = np.zeros((N_S,N_A))
+
 
 		k = 0
-		t1_start = perf_counter()
+		t_start = perf_counter()
+
+		#fig = plt.figure(figsize=(11,5))
 		while True:
 			for s in range(N_S):
+				old_V = copy(V)
+				old_Pi = copy(Pi)
 				for a in range(N_A):
 					Q[s,a] = sum(self.P[s,a]*(self.R[s,a]+self.G*V))
-				new_V  = np.amax(Q, axis=1)
-				new_Pi = np.argmax(Q, axis=1)
-			temp = np.linalg.norm(V - new_V)
-			if temp < 0.00000001:
+				V  = np.amax(Q, axis=1)
+				Pi = np.argmax(Q, axis=1)
+			diff = np.linalg.norm(V - old_V)
+			
+			'''
+			ax1 = plt.subplot(121)
+			ax2 = plt.subplot(122)
+			self.plotPolicyFunction(ax1, Pi)
+			self.plotValueFunction(ax2, V)
+			plt.tight_layout()
+			plt.show(block=False)
+			plt.pause(0.1)
+			'''
+
+			if diff < GridWorld.threshold:
 				break
-			V  = copy(new_V)
-			Pi = copy(new_Pi)
 			k += 1
-		t1_stop = perf_counter()
-		print(f'Elapsed Time: t={t1_stop-t1_start:.6f}s')
+		t_stop = perf_counter()
+		print(f'Elapsed Time: t={t_stop-t_start:.6f}s')
 
 		return V,Pi,k
 
+	# Run Policy Iteration
+	def policyIteration(self):
+		N_S = len(self.S)
+		N_A = len(self.A)
+
+		V = np.zeros(N_S)
+		Pi = np.random.randint(0,N_A,(N_S))
+		Q = np.zeros((N_S,N_A))
+
+		k = 0
+		t_start = perf_counter()
+		while True:
+			# Policy Evaluation
+			while True:
+				old_V = copy(V)
+				for s in range(N_S):
+					a = Pi[s]
+					Q[s,a] = sum(self.P[s,a]*(self.R[s,a]+self.G*V))
+				V = np.amax(Q, axis=1)
+				diff = np.linalg.norm(V - old_V)
+				if diff < GridWorld.threshold:
+					break
+			# Policy Improvement
+			old_Pi = copy(Pi)
+			for s in range(N_S):
+				for a in range(N_A):
+					Q[s,a] = sum(self.P[s,a]*(self.R[s,a]+self.G*V))
+				Pi = np.argmax(Q, axis=1)
+			diff = np.linalg.norm(Pi - old_Pi)
+			if diff == 0:
+				break
+			k += 1
+		t_stop = perf_counter()
+		print(f'Elapsed Time: t={t_stop-t_start:.6f}s')
+
+		return V,Pi,k
 
 	# Updates the current state of the agent stociastically based off a desired action
 	def updateState(self, action:vector):
